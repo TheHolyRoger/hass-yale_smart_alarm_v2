@@ -1,0 +1,6 @@
+{
+  "name": "Yale Smart Living v2",
+  "content_in_root": false,
+  "render_readme": true,
+  "homeassistant": "2022.11.0"
+}
