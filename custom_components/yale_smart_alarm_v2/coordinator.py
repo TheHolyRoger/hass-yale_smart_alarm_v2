@@ -1,7 +1,7 @@
 """DataUpdateCoordinator for the Yale integration."""
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from yalesmartalarmclient.client import YaleSmartAlarmClient
@@ -30,6 +30,22 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
 
+    def device_exists_in_updates_history(self, device, updates, minutes=3):
+        update_timestamp = updates["update_timestamp"]
+        accepted_timestamp = update_timestamp - timedelta(minutes=minutes)
+        exists = False
+        for hist_item in updates["history"]:
+            hist_time = hist_item["time"]
+            hist_date = datetime.strptime(hist_time, "%Y/%m/%d %H:%M:%S")
+            if hist_date < accepted_timestamp:
+                break
+            if hist_item["type"] != device["type"]:
+                continue
+            if str(hist_item["area"]) != str(device["area"]):
+                continue
+            exists = True
+        return exists
+
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from Yale."""
 
@@ -37,6 +53,8 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
 
         locks = []
         door_windows = []
+        sensors_temperature = []
+        sensors_smoke = []
 
         for device in updates["cycle"]["device_status"]:
             state = device["status1"]
@@ -105,20 +123,39 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
                 device["_state"] = "unavailable"
                 door_windows.append(device)
                 continue
+            if device["type"] == "device_type.temperature_sensor":
+                state = device["status_temp"]
+                device["_state"] = float(state)
+                sensors_temperature.append(device)
+                continue
+            if device["type"] == "device_type.smoke_detector":
+                if self.device_exists_in_updates_history(device, updates, minutes=3):
+                    state = "on"
+                else:
+                    state = "off"
+                device["_state"] = state
+                sensors_smoke.append(device)
+                continue
 
-        _sensor_map = {
+        _door_sensor_map = {
             contact["address"]: contact["_state"] for contact in door_windows
         }
         _lock_map = {lock["address"]: lock["_state"] for lock in locks}
+        _temperature_map = {s["address"]: s["_state"] for s in sensors_temperature}
+        _smoke_map = {s["address"]: s["_state"] for s in sensors_smoke}
 
         return {
             "alarm": updates["arm_status"],
             "locks": locks,
             "door_windows": door_windows,
+            "temperature_sensors": sensors_temperature,
+            "smoke_sensors": sensors_smoke,
             "status": updates["status"],
             "online": updates["online"],
-            "sensor_map": _sensor_map,
+            "door_sensor_map": _door_sensor_map,
             "lock_map": _lock_map,
+            "temperature_map": _temperature_map,
+            "smoke_map": _smoke_map,
             "panel_info": updates["panel_info"],
         }
 
@@ -139,9 +176,12 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
             arm_status = self.yale.get_armed_status()
             data = self.yale.get_all()
             cycle = data["CYCLE"]
+            history = data["HISTORY"]
             status = data["STATUS"]
             online = data["ONLINE"]
             panel_info = data["PANEL INFO"]
+            token_time = data["AUTH CHECK"]["token_time"]
+            update_timestamp = datetime.strptime(token_time, "%Y-%m-%d %H:%M:%S")
 
         except AuthenticationError as error:
             raise ConfigEntryAuthFailed from error
@@ -154,4 +194,6 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
             "status": status,
             "online": online,
             "panel_info": panel_info,
+            "history": history,
+            "update_timestamp": update_timestamp,
         }

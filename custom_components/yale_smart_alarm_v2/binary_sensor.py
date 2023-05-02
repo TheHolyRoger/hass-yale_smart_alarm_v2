@@ -51,9 +51,11 @@ async def async_setup_entry(
     coordinator: YaleDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    sensors: list[YaleDoorSensor | YaleProblemSensor] = []
+    sensors: list[YaleDoorSensor | YaleSmokeSensor | YaleProblemSensor] = []
     for data in coordinator.data["door_windows"]:
         sensors.append(YaleDoorSensor(coordinator, data))
+    for data in coordinator.data["smoke_sensors"]:
+        sensors.append(YaleSmokeSensor(coordinator, data))
     for description in SENSOR_TYPES:
         sensors.append(YaleProblemSensor(coordinator, description))
 
@@ -68,7 +70,18 @@ class YaleDoorSensor(YaleEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
-        return bool(self.coordinator.data["sensor_map"][self._attr_unique_id] == "open")
+        return bool(self.coordinator.data["door_sensor_map"][self._attr_unique_id] == "open")
+
+
+class YaleSmokeSensor(YaleEntity, BinarySensorEntity):
+    """Representation of a Yale Smoke sensor."""
+
+    _attr_device_class = BinarySensorDeviceClass.SMOKE
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the binary sensor is on."""
+        return bool(self.coordinator.data["smoke_map"][self._attr_unique_id] == "on")
 
 
 class YaleProblemSensor(YaleAlarmEntity, BinarySensorEntity):
