@@ -8,7 +8,12 @@ from yalesmartalarmclient.client import YaleSmartAlarmClient
 from yalesmartalarmclient.exceptions import AuthenticationError
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    YALE_EVENT_TYPE_SMOKE_ON,
+    YALE_EVENT_TYPE_SMOKE_OFF,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -30,7 +35,7 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
 
-    def device_exists_in_updates_history(self, device, updates, minutes=3):
+    def device_on_in_updates_history(self, device, updates, enabled_type, disabled_type, minutes=3):
         update_timestamp = updates["update_timestamp"]
         accepted_timestamp = update_timestamp - timedelta(minutes=minutes)
         exists = False
@@ -43,7 +48,11 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
                 continue
             if str(hist_item["area"]) != str(device["area"]):
                 continue
-            exists = True
+            if str(hist_item["event_type"]) == disabled_type:
+                break
+            if str(hist_item["event_type"]) == enabled_type:
+                exists = True
+                break
         return exists
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -129,7 +138,13 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
                 sensors_temperature.append(device)
                 continue
             if device["type"] == "device_type.smoke_detector":
-                if self.device_exists_in_updates_history(device, updates, minutes=3):
+                if self.device_on_in_updates_history(
+                    device,
+                    updates,
+                    YALE_EVENT_TYPE_SMOKE_ON,
+                    YALE_EVENT_TYPE_SMOKE_OFF,
+                    minutes=3
+                ):
                     state = "on"
                 else:
                     state = "off"
