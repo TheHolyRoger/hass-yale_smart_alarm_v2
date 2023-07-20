@@ -11,14 +11,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_PASSWORD,
     CONF_USERNAME,
-    YALE_EVENT_TYPE_SMOKE_ON,
-    YALE_EVENT_TYPE_SMOKE_OFF,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER, YALE_BASE_ERRORS
+from .const import (
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    LOGGER,
+    YALE_BASE_ERRORS,
+    YALE_EVENT_TYPE_SMOKE_ON,
+    YALE_EVENT_TYPE_SMOKE_OFF,
+)
 
 
 class YaleDataUpdateCoordinator(DataUpdateCoordinator):
