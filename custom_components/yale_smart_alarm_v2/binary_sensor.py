@@ -21,24 +21,28 @@ SENSOR_TYPES = (
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
         name="Power loss",
+        translation_key="power_loss",
     ),
     BinarySensorEntityDescription(
         key="battery",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
         name="Battery",
+        translation_key="battery",
     ),
     BinarySensorEntityDescription(
         key="tamper",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
         name="Tamper",
+        translation_key="tamper",
     ),
     BinarySensorEntityDescription(
         key="jam",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
         name="Jam",
+        translation_key="jam",
     ),
 )
 

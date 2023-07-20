@@ -16,6 +16,7 @@ BUTTON_TYPES = (
     ButtonEntityDescription(
         key="panic",
         name="Panic button",
+        translation_key="panic",
         icon="mdi:alarm-light",
     ),
 )
