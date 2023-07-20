@@ -4,6 +4,7 @@ from __future__ import annotations
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
@@ -34,7 +35,9 @@ class YaleTemperatureSensor(YaleEntity, SensorEntity):
     """Representation of a Yale Temperature sensor."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
     @property
     def state(self) -> float:
