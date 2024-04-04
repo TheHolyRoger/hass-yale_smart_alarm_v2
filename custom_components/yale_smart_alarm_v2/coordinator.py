@@ -8,10 +8,7 @@ from yalesmartalarmclient.client import YaleSmartAlarmClient
 from yalesmartalarmclient.exceptions import AuthenticationError
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_PASSWORD,
-    CONF_USERNAME,
-)
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -26,7 +23,7 @@ from .const import (
 )
 
 
-class YaleDataUpdateCoordinator(DataUpdateCoordinator):
+class YaleDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """A Yale Data Update Coordinator."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -38,6 +35,7 @@ class YaleDataUpdateCoordinator(DataUpdateCoordinator):
             LOGGER,
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            always_update=False,
         )
 
     def device_on_in_updates_history(self, device, updates, enabled_type, disabled_type, minutes=3):
